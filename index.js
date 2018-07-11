@@ -111,7 +111,7 @@ const getPartyPosition = (bill, party) => {
     .then(partyAffiliations => countBy(partyAffiliations, identity));
 
   return Promise.all([yes, no]).then(
-    result => (result[0][party] > result[0][party] ? "yes" : "no")
+    result => (result[0][party] > result[1][party] ? "yes" : "no")
   );
 };
 
