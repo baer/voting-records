@@ -94,26 +94,22 @@ const getPartisainBillsFromSession = (session, chamber, threshold) =>
       .then(Object.keys);
   });
 
-const getPartyPosition = (bill, party) => {
-  const yesVotes = get(bill, "votes[0].yes_votes", []);
-  const noVotes = get(bill, "votes[0].no_votes", []);
-
-  const yes = Promise.resolve(yesVotes)
+const getVoteTallyByParty = votes =>
+  Promise.resolve(votes)
     .then(votes => votes.filter(vote => vote.leg_id))
     .then(votes => Promise.all(votes.map(vote => getLegislator(vote.leg_id))))
     .then(legislators => legislators.map(legislator => legislator.party))
     .then(partyAffiliations => countBy(partyAffiliations, identity));
 
-  const no = Promise.resolve(noVotes)
-    .then(votes => votes.filter(vote => vote.leg_id))
-    .then(votes => Promise.all(votes.map(vote => getLegislator(vote.leg_id))))
-    .then(legislators => legislators.map(legislator => legislator.party))
-    .then(partyAffiliations => countBy(partyAffiliations, identity));
-
-  return Promise.all([yes, no]).then(
-    result => (result[0][party] > result[1][party] ? "yes" : "no")
-  );
-};
+const getPartyPosition = (bill, party) =>
+  Promise.all([
+    getVoteTallyByParty(get(bill, "votes[0].yes_votes", [])),
+    getVoteTallyByParty(get(bill, "votes[0].no_votes", []))
+  ]).then(result => {
+    const yesVotesByParty = result[0];
+    const noVotesByParty = result[1];
+    return yesVotesByParty[party] > noVotesByParty[party] ? "yes" : "no";
+  });
 
 //==================================================================================================
 
